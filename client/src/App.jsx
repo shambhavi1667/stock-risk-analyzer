@@ -184,14 +184,12 @@ export default function App() {
         setPortfolio(prev => ({
           ...prev,
           riskMetrics: {
-            beta: data.metrics.beta,
-            volatility: data.metrics.volatility,
-            valueAtRisk: data.metrics.valueAtRisk,
-            diversificationScore: data.metrics.diversificationScore,
+            ...data.metrics,
             lastAnalyzed: new Date().toISOString(),
             agentReport: data.agentReport,
             agentLogs: data.agentLogs
-          }
+          },
+          holdings: data.holdings
         }));
         triggerNotification('success', 'AI agents completed risk re-analysis!');
       } else {

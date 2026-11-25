@@ -79,10 +79,10 @@ function executePythonDownloader(ticker, logs) {
       fs.mkdirSync(scriptsDir, { recursive: true });
     }
 
-    // Run python script synchronously
+        // Run python script synchronously
     const command = `python "${scriptPath}" "${tickerKey}"`;
     logs.push(`DataLoader: Running: ${command}`);
-    execSync(command, { stdio: 'pipe' });
+    execSync(command, { stdio: 'pipe', cwd: path.join(__dirname, '..') });
     
     logs.push(`DataLoader: Download completed successfully for ${tickerKey}.`);
     updateCache(tickerKey);
@@ -320,17 +320,6 @@ const currentPrice =
         ? Number(info.currentPrice)
         : 100);
 
-  const latestClose =
-  history.length > 0
-    ? Number(history[history.length - 1].close)
-    : NaN;
-
-const currentPrice =
-  !Number.isNaN(latestClose)
-    ? latestClose
-    : (!Number.isNaN(Number(info.currentPrice))
-        ? Number(info.currentPrice)
-        : 100);
 
 console.log("================================");
 console.log("Ticker:", tickerKey);

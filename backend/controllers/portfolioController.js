@@ -107,6 +107,7 @@ const getPortfolio = async (req, res) => {
 // @route   POST /api/portfolio/holdings
 // @access  Private
 const addHolding = async (req, res) => {
+  console.log("addHolding called", req.body);
   let { ticker, shares, buyPrice } = req.body;
 
   if (!ticker || !shares || !buyPrice) {
@@ -125,67 +126,37 @@ const addHolding = async (req, res) => {
   }
 
   try {
-    if (dbState.isFallback) {
-      const data = dbState.readFallbackData();
-      const portfolio = getFallbackPortfolio(req.user.id, data);
+    let portfolio = await Portfolio.findOne({ user: req.user.id });
+    if (!portfolio) {
+      portfolio = new Portfolio({ user: req.user.id, holdings: [] });
+    }
 
-      const existingHoldingIndex = portfolio.holdings.findIndex(h => h.ticker === ticker);
-      if (existingHoldingIndex > -1) {
-        // Average the buy price and add shares
-        const existing = portfolio.holdings[existingHoldingIndex];
-        const newTotalShares = existing.shares + shares;
-        const newAverageBuyPrice = ((existing.shares * existing.buyPrice) + (shares * buyPrice)) / newTotalShares;
-        
-        existing.shares = parseFloat(newTotalShares.toFixed(4));
-        existing.buyPrice = parseFloat(newAverageBuyPrice.toFixed(2));
-      } else {
-        portfolio.holdings.push({
-          id: `holding_${Date.now()}`,
-          ticker,
-          shares,
-          buyPrice
-        });
-      }
+    const existingIndex = portfolio.holdings.findIndex(h => h.ticker === ticker);
+    if (existingIndex > -1) {
+      const existing = portfolio.holdings[existingIndex];
+      const newTotalShares = existing.shares + shares;
+      const newAvgPrice = ((existing.shares * existing.buyPrice) + (shares * buyPrice)) / newTotalShares;
+      existing.shares = parseFloat(newTotalShares.toFixed(4));
+      existing.buyPrice = parseFloat(newAvgPrice.toFixed(2));
+    } else {
+      portfolio.holdings.push({ ticker, shares, buyPrice });
+    }
 
-      // Automatically recalculate base risk metrics
-      const analysis = await analyzePortfolioRisk(portfolio.holdings);
-    portfolio.holdings =
-    analysis.holdings;
-
-portfolio.riskMetrics = {
-
-    ...analysis.metrics,
-
-    lastAnalyzed: new Date(),
-
-    agentReport:
-        analysis.agentReport,
-
-    agentLogs:
-        analysis.agentLogs
-
-};
-
-portfolio.updatedAt =
-    new Date();
-
-if (!dbState.isFallback)
+    const analysis = await analyzePortfolioRisk(portfolio.holdings);
+    portfolio.riskMetrics = {
+      ...analysis.metrics,
+      lastAnalyzed: new Date(),
+      agentReport: analysis.agentReport,
+      agentLogs: analysis.agentLogs
+    };
+    portfolio.updatedAt = new Date();
     await portfolio.save();
 
-return res.json({
+    return res.json({
+      ...portfolio.toObject(),
+      holdings: analysis.holdings
+    });
 
-    ...(portfolio.toObject
-        ? portfolio.toObject()
-        : portfolio),
-
-    holdings:
-        analysis.holdings
-
-});
-
-      await portfolio.save();
-      return res.json(portfolio);
-    }
   } catch (err) {
     console.error('Add holding error:', err.message);
     res.status(500).send('Server error adding stock holding');

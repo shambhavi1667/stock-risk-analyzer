@@ -14,12 +14,16 @@ export function toSeries(rows = []) {
   return rows
     .map(r => ({
       date: new Date(r.Date || r.date),
-      close: Number(
+     close: Number(
         r["Adj Close"] ??
         r["AdjClose"] ??
         r["Adj_Close"] ??
         r["Close"] ??
-        r["close"]
+        r["close"] ??
+        // Handle ticker-suffixed columns e.g. "Adj Close_AAPL"
+        Object.entries(r).find(([k]) => k.startsWith("Adj Close"))?.[1] ??
+        Object.entries(r).find(([k]) => k.startsWith("Close"))?.[1] ??
+        0
       )
     }))
     .filter(x =>

@@ -44,11 +44,22 @@ export async function readJSON(file, fallback = null) {
 
 export async function readCSV(file) {
   const txt = await fs.readFile(file, "utf8");
+  const firstLine = txt.trim().split("\n")[0];
+  const hasHeader = isNaN(firstLine.split(",")[0].trim());
 
-  return parse(txt, {
-    columns: true,
-    skip_empty_lines: true,
-  });
+  if (hasHeader) {
+    return parse(txt, {
+      columns: true,
+      skip_empty_lines: true,
+    });
+  } else {
+    // Headerless CSV: Date,Open,High,Low,Close,AdjClose,Volume
+    const rows = parse(txt, {
+      columns: ["Date", "Open", "High", "Low", "Close", "AdjClose", "Volume"],
+      skip_empty_lines: true,
+    });
+    return rows;
+  }
 }
 
 export async function loadLocalOrRootCSV(ticker) {

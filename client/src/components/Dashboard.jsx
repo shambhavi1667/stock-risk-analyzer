@@ -32,10 +32,10 @@ const renderMarkdown = (mdText) => {
   const flushList = (key) => {
     if (currentList.length > 0) {
       elements.push(
-  <ul key={`list-${key}`}>
-    {currentList}
-  </ul>
-);
+        <ul key={`list-${key}`}>
+          {currentList}
+        </ul>
+      );
       currentList = [];
     }
   };
@@ -55,7 +55,6 @@ const renderMarkdown = (mdText) => {
   lines.forEach((line, index) => {
     const trimmed = line.trim();
 
-    // Blockquote
     if (trimmed.startsWith('>')) {
       flushList(index);
       inBlockquote = true;
@@ -65,7 +64,6 @@ const renderMarkdown = (mdText) => {
       flushBlockquote(index);
     }
 
-    // Headers
     if (trimmed.startsWith('# ')) {
       flushList(index);
       elements.push(<h1 key={`h1-${index}`}>{trimmed.slice(2)}</h1>);
@@ -78,11 +76,8 @@ const renderMarkdown = (mdText) => {
     } else if (trimmed.startsWith('---')) {
       flushList(index);
       elements.push(<hr key={`hr-${index}`} style={{ borderColor: 'rgba(255,255,255,0.08)', margin: '18px 0' }} />);
-    }
-    // List Items
-    else if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
-      let contentStr = trimmed.slice(2);
-      // Parse strong/bold text inside bullets (e.g., **Text:**)
+    } else if (trimmed.startsWith('* ') || trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
+      let contentStr = trimmed.startsWith('• ') ? trimmed.slice(2) : trimmed.slice(2);
       const boldRegex = /\*\*(.*?)\*\*/g;
       const parts = [];
       let lastIdx = 0;
@@ -90,25 +85,17 @@ const renderMarkdown = (mdText) => {
       let matchCount = 0;
 
       while ((match = boldRegex.exec(contentStr)) !== null) {
-        if (match.index > lastIdx) {
-          parts.push(contentStr.substring(lastIdx, match.index));
-        }
+        if (match.index > lastIdx) parts.push(contentStr.substring(lastIdx, match.index));
         parts.push(<strong key={`bold-${index}-${matchCount}`}>{match[1]}</strong>);
         lastIdx = boldRegex.lastIndex;
         matchCount++;
       }
-      if (lastIdx < contentStr.length) {
-        parts.push(contentStr.substring(lastIdx));
-      }
+      if (lastIdx < contentStr.length) parts.push(contentStr.substring(lastIdx));
 
       const finalContent = parts.length > 0 ? parts : contentStr;
       currentList.push(<li key={`li-${index}`}>{finalContent}</li>);
-    } 
-    // Normal paragraphs
-    else if (trimmed.length > 0) {
+    } else if (trimmed.length > 0) {
       flushList(index);
-      
-      // Inline code highlights
       let contentStr = trimmed;
       const codeRegex = /`(.*?)`/g;
       const parts = [];
@@ -117,16 +104,12 @@ const renderMarkdown = (mdText) => {
       let matchCount = 0;
 
       while ((match = codeRegex.exec(contentStr)) !== null) {
-        if (match.index > lastIdx) {
-          parts.push(contentStr.substring(lastIdx, match.index));
-        }
+        if (match.index > lastIdx) parts.push(contentStr.substring(lastIdx, match.index));
         parts.push(<code key={`code-${index}-${matchCount}`}>{match[1]}</code>);
         lastIdx = codeRegex.lastIndex;
         matchCount++;
       }
-      if (lastIdx < contentStr.length) {
-        parts.push(contentStr.substring(lastIdx));
-      }
+      if (lastIdx < contentStr.length) parts.push(contentStr.substring(lastIdx));
 
       const finalContent = parts.length > 0 ? parts : contentStr;
       elements.push(<p key={`p-${index}`}>{finalContent}</p>);
@@ -164,19 +147,21 @@ export default function Dashboard({
   };
 
   const holdings = portfolio.holdings || [];
-const metrics = {
-  beta: 0,
-  volatility: 0,
-  annualReturn: 0,
-  sharpeRatio: 0,
-  maxDrawdown: 0,
-  valueAtRisk: 0,
-  diversificationScore: 100,
-  agentLogs: [],
-  agentReport: "",
-  ...(portfolio?.riskMetrics || {}),
-};
-  // Calculate dynamic parameters for charts
+  const metrics = {
+    beta: 0,
+    volatility: 0,
+    annualReturn: 0,
+    sharpeRatio: 0,
+    maxDrawdown: 0,
+    valueAtRisk: 0,
+    diversificationScore: 100,
+    agentLogs: [],
+    agentReport: "",
+    ...(portfolio?.riskMetrics || {}),
+  };
+  console.log("FULL METRICS:", metrics);
+console.log("AGENT REPORT:", metrics.agentReport);
+
   const totalValue = holdings.reduce((sum, h) => sum + (h.shares * (h.currentPrice || h.buyPrice)), 0);
 
   const sectorDataMap = {};
@@ -191,34 +176,27 @@ const metrics = {
 
   const chartData = {
     labels: chartLabels,
-    datasets: [
-      {
-        data: chartValues,
-        backgroundColor: [
-          'rgba(59, 130, 246, 0.45)',  // Blue
-          'rgba(139, 92, 246, 0.45)', // Purple
-          'rgba(16, 185, 129, 0.45)', // Green
-          'rgba(245, 158, 11, 0.45)', // Yellow/Amber
-          'rgba(239, 68, 68, 0.45)',  // Red
-          'rgba(236, 72, 153, 0.45)', // Pink
-          'rgba(6, 182, 212, 0.45)'   // Cyan
-        ],
-        borderColor: [
-          '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4'
-        ],
-        borderWidth: 1.5,
-      },
-    ],
+    datasets: [{
+      data: chartValues,
+      backgroundColor: [
+        'rgba(59, 130, 246, 0.45)',
+        'rgba(139, 92, 246, 0.45)',
+        'rgba(16, 185, 129, 0.45)',
+        'rgba(245, 158, 11, 0.45)',
+        'rgba(239, 68, 68, 0.45)',
+        'rgba(236, 72, 153, 0.45)',
+        'rgba(6, 182, 212, 0.45)'
+      ],
+      borderColor: ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4'],
+      borderWidth: 1.5,
+    }],
   };
 
   const chartOptions = {
     plugins: {
       legend: {
         position: 'bottom',
-        labels: {
-          color: '#e2e8f0',
-          font: { family: 'Plus Jakarta Sans', size: 11 }
-        }
+        labels: { color: '#e2e8f0', font: { family: 'Plus Jakarta Sans', size: 11 } }
       },
       tooltip: {
         callbacks: {
@@ -233,7 +211,6 @@ const metrics = {
     maintainAspectRatio: false
   };
 
-  // Get Risk level classification
   const getBetaLevel = (b) => {
     if (b > 1.25) return { text: 'High Risk (Cyclical)', class: 'high-risk' };
     if (b > 0.8) return { text: 'Moderate Risk (Market-like)', class: 'mod-risk' };
@@ -364,9 +341,7 @@ const metrics = {
                     const value = h.shares * price;
                     return (
                       <tr key={h.ticker + i}>
-                        <td>
-                          <span className="holdings-ticker">{h.ticker}</span>
-                        </td>
+                        <td><span className="holdings-ticker">{h.ticker}</span></td>
                         <td>{h.shares}</td>
                         <td>${parseFloat(h.buyPrice).toFixed(2)}</td>
                         <td>${value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
@@ -413,17 +388,14 @@ const metrics = {
 
             <div className="metric-badge">
               <div className="metric-label">Annualized Vol</div>
-              <div className={`metric-val ${volRisk.class}`}>
-  {((metrics?.volatility ?? 0) * 100).toFixed(1)}%
-</div>
+              <div className={`metric-val ${volRisk.class}`}>{((metrics?.volatility ?? 0) * 100).toFixed(1)}%</div>
               <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>{volRisk.text}</div>
             </div>
 
             <div className="metric-badge">
               <div className="metric-label">Annual Return</div>
-<div className={`metric-val ${returnRisk.class}`}>
-  {((metrics?.annualReturn ?? 0) * 100).toFixed(1)}%
-</div>              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>{returnRisk.text}</div>
+              <div className={`metric-val ${returnRisk.class}`}>{((metrics?.annualReturn ?? 0) * 100).toFixed(1)}%</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>{returnRisk.text}</div>
             </div>
 
             <div className="metric-badge">
@@ -447,10 +419,7 @@ const metrics = {
             <div className="metric-badge" style={{ gridColumn: 'span 2' }}>
               <div className="metric-label">1-Day 95% Value-at-Risk (VaR)</div>
               <div className="metric-val text-blue" style={{ fontSize: '26px' }}>
-               ${(metrics.valueAtRisk ?? 0).toLocaleString(undefined,{
-  minimumFractionDigits:2,
-  maximumFractionDigits:2
-})}
+                ${(metrics.valueAtRisk ?? 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
               </div>
               <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
                 Maximum statistical daily loss at 95% confidence level
@@ -478,13 +447,12 @@ const metrics = {
 
       {/* COLUMN 3: Multi-Agent Logger & Decision advisory report */}
       <section className="dashboard-column agent-column">
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
           <div className="card-title" style={{ justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Cpu size={20} className="text-purple" />
               Multi-Agent AI Engine Panel
             </div>
-            
             <button 
               onClick={onAnalyzePortfolio} 
               className="btn btn-secondary" 
@@ -528,9 +496,9 @@ const metrics = {
             )}
           </div>
 
-          {/* Decisive markdown report */}
-          <div style={{ flex: 1, overflowY: 'auto', maxHeight: '500px' }}>
-            <div className="advisory-report-wrapper">
+         {/* Advisory Report */}
+          <div style={{ flex: 1, overflowY: 'scroll', minHeight: '150px', maxHeight: '350px', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: '8px', paddingTop: '8px' }}>
+            <div style={{ color: '#e2e8f0', fontSize: '13px', padding: '8px', lineHeight: '1.6' }}>
               {isAnalyzing ? (
                 <div className="empty-state">
                   <RefreshCw size={24} className="spinner" style={{ marginBottom: '12px' }} />
@@ -542,11 +510,12 @@ const metrics = {
                 <div className="empty-state">
                   <Cpu size={24} className="empty-state-icon" />
                   <p>No advisory report generated yet.</p>
-                  <p style={{ fontSize: '11px', marginTop: '6px' }}>Add stock holdings to trigger the Decision Agent's quantitative-qualitative analysis.</p>
+                  <p style={{ fontSize: '11px', marginTop: '6px' }}>Add stock holdings to trigger the Decision Agent's analysis.</p>
                 </div>
               )}
             </div>
           </div>
+
         </div>
       </section>
 
