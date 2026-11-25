@@ -37,7 +37,7 @@ const connectDB = async () => {
     mongoose.set('strictQuery', false);
     const connUri = process.env.MONGO_URI || 'mongodb://localhost:27017/risk-analyzer';
     await mongoose.connect(connUri, {
-      serverSelectionTimeoutMS: 3000 // 3 seconds timeout
+    serverSelectionTimeoutMS: 10000 // 10 seconds timeout
     });
     dbState.connected = true;
     dbState.isFallback = false;
