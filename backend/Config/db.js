@@ -46,6 +46,8 @@ const connectDB = async () => {
     dbState.connected = false;
     dbState.isFallback = true;
     console.warn('\n⚠️ WARNING: Could not connect to MongoDB. Database Fallback enabled!');
+    console.error('MongoDB connection error:', error.message);
+    console.error('MONGO_URI being used:', process.env.MONGO_URI);
     console.warn(`Local JSON fallback store initialized at: ${dbState.fallbackFile}\n`);
     dbState.readFallbackData();
   }
