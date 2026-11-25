@@ -17,8 +17,8 @@ connectDB();
 
 // Middlewares
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://stock-risk-analyzer-lemon.vercel.app'],
-  credentials: true
+  origin: '*',
+  credentials: false
 }));
 app.use(express.json());
 
