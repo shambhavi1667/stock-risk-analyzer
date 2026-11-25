@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Dashboard from './components/Dashboard';
 import { LogIn, LogOut, UserPlus, Cpu, AlertTriangle, ShieldCheck } from 'lucide-react';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'https://stock-risk-analyzer-sdln.onrender.com/api';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
